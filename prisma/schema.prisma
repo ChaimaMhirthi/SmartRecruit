@@ -1,0 +1,72 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+
+model User {
+  id          Int       @id @default(autoincrement())
+  nom         String
+  email       String    @unique
+  password    String
+  role        Role
+  createdAt   DateTime  @default(now())
+  candidat    Candidat?
+  recruteur   Recruteur?
+}
+
+model Candidat {
+  id            Int             @id @default(autoincrement())
+  userId        Int             @unique
+  user          User            @relation(fields: [userId], references: [id])
+  cvUrl         String?
+  competences   String?
+  testsIA       String?
+  candidatures  Candidature[]
+}
+
+model Recruteur {
+  id           Int        @id @default(autoincrement())
+  userId       Int        @unique
+  user         User       @relation(fields: [userId], references: [id])
+  entreprise   String
+  offres       Offre[]
+}
+
+model Offre {
+  id             Int             @id @default(autoincrement())
+  titre          String
+  description    String
+  recruteurId    Int
+  recruteur      Recruteur       @relation(fields: [recruteurId], references: [id])
+  candidatures   Candidature[]
+  createdAt      DateTime        @default(now())
+}
+
+model Candidature {
+  id           Int        @id @default(autoincrement())
+  offreId      Int
+  candidatId   Int
+  status       String      @default("en attente")
+  scoreIA      Float?
+  createdAt    DateTime    @default(now())
+  offre        Offre       @relation(fields: [offreId], references: [id])
+  candidat     Candidat    @relation(fields: [candidatId], references: [id])
+}
+
+enum Role {
+  ADMIN
+  RECRUTEUR
+  CANDIDAT
+}
